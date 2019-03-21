@@ -27,8 +27,8 @@ class UserInfo(APIView):
 			username = Token.objects.get(key=token).user.username
 			user_code = Token.objects.get(key=token).user.is_superuser
 			role_list = self._user_role(username)
-			role_permissions_list = self._user_permissions(role_list)
-			accessMenus = self._accessMenus(role_permissions_list)
+			menu_data = self._menus(role_list)
+			accessMenus = self._accessMenus(menu_data)
 			return Response(data)
 		return Response(data)
 
@@ -42,27 +42,47 @@ class UserInfo(APIView):
 		role_list = [ role['user_role__code'] for role in role_query if role["user_role__code"]]
 		return role_list
 
-	def _user_permissions(self, role_code_list: list):
+	def _menus(self, role_code_list: list):
 		"""
 		获取传入所有角色的所有权限
 		:param role_code_list: ["user_role_1", "user_role_2", ...]
 		:return: ["permissions_name1", "permissions_name2", ...]
 		"""
-		permissions_list = []
-		for role_code in role_code_list:
-			permissions_query = Role.objects.filter(code=role_code).values("permission__permission").all()
-			for permission in permissions_query:
-				if permission['permission__permission']: permissions_list.append(permission["permission__permission"])
-		return permissions_list
-
-	def _accessMenus(self,permissions_list):
 		menu_list = []
-		for permissions in permissions_list:
-			menu_quey = Menu.objects.filter(permission=permissions).all().values("permission")
-			for menu in menu_quey:
-				menu_list.append(menu)
-		print(menu_list)
-		return menu_list
+		permissions_list = []
+		first_menu = []
+		menu_node =set()
+		for role_code in role_code_list:
+			menu_queryset = Menu.objects.filter(role__code=role_code).all().values()
+			for menu_dict in menu_queryset:
+				if menu_dict['parent_id'] == '0':
+					first_menu.append(menu_dict)
+				if menu_dict['type'] == 0 :
+					menu_node.add(menu_dict['parent_id'])
+					menu_list.append({menu_dict['parent_id']:menu_dict})
+				permissions_list.append(menu_dict['permission'])
+		menu_data = {"menu_node":menu_node, "menu_list":menu_list,"permissions_list":permissions_list,"first_menu":first_menu}
+		return menu_data
+
+	def _accessMenus(self ,menu_data):
+		print(menu_data)
+		for first_menu in menu_data["first_menu"]:
+			children = []
+			for node in menu_data["menu_node"]:
+				if first_menu["parent_id"]  == node :
+					continue
+
+			# print(menu_data['first_menu'][n][i])
+		return menu_data
+
+	# def _accessMenus(self,permissions_list):
+	# 	menu_list = []
+	# 	for permission in permissions_list:
+	# 		menu_quey = Menu.objects.filter(permission=permission).all().values()
+	# 		for menu in menu_quey:
+	# 			menu_list.append(menu)
+	# 	print(menu_list)
+	# 	return menu_list
 
 """
 {

@@ -5,10 +5,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
-    super_choices = (
-        (0, '管理员'),
-        (1, '普通用户'))
-    is_superuser = models.SmallIntegerField(choices=super_choices)
+    is_superuser = models.SmallIntegerField(choices=((0, '管理员'),(1, '普通用户')))
     user_role = models.ManyToManyField("Role", db_table="user_to_role", verbose_name="用户角色")
 
     class Meta:
@@ -37,9 +34,6 @@ class Interface(models.Model):
         db_table = "msk_interface"
 
 
-
-
-
 class Menu(models.Model):
     id = models.AutoField(primary_key=True)
     menu_id = models.CharField(max_length=128, unique=True, verbose_name="菜单ID")
@@ -48,7 +42,7 @@ class Menu(models.Model):
     title = models.CharField(max_length=128, verbose_name="菜单标题")
     icon = models.CharField(max_length=128, null=True, verbose_name="菜单图标")
     permission = models.CharField(max_length=128, null=True, verbose_name="菜单权限标识")
-    type = models.CharField(max_length=2, choices=((0, u"菜单"), (1, "功能")), verbose_name="类型")
+    type = models.SmallIntegerField(max_length=2, choices=((0, u"菜单"), (1, "功能")), verbose_name="类型")
     sort = models.IntegerField(verbose_name="排序")
     is_lock = models.BooleanField(default=False, verbose_name="锁定")
     api = models.ManyToManyField('Interface', db_table='menu_to_interface')
