@@ -65,10 +65,12 @@ class UserInfo(APIView):
 		return menu_data
 
 	def _accessMenus(self ,menu_data):
-		print(menu_data)
+		print(menu_data['menu_node'])
+		print(menu_data['menu_list'])
 		for first_menu in menu_data["first_menu"]:
 			children = []
 			for node in menu_data["menu_node"]:
+				print(first_menu)
 				if first_menu["parent_id"]  == node :
 					continue
 
