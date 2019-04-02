@@ -6,7 +6,7 @@
 # @File    : _common.py
 # @Software: PyCharm
 
-def _http_result(code: int, token: str, data: dict, msg: str = "",) -> dict or bool:
+def _http_result(code: int, data: dict, token: str = "",  msg: str = "",) -> dict or bool:
     """
     自定义https返回的json
     :param code: int

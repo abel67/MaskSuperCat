@@ -15,8 +15,24 @@ from api.serializers import UserInfoSerializer
 from api.views._common import _http_result
 from rest_framework.authtoken.models import Token
 
-
 class UserInfo(APIView):
+	"""
+	{
+	  "statusCode": 200,
+	  "msg": "",
+	  "data": {
+	    "userName": "",
+	    "isAdmin": 0,
+	    "userRoles": [],
+	    "userPermissions": [],
+	    "accessMenus": [],
+	    "accessRoutes": [],
+	    "accessInterfaces": [],
+
+	    "avatarUrl": "https://api.adorable.io/avatars/85/abott@adorable.png"
+	  }
+	}
+	"""
 
 	def get(self, request):
 		data = {}
@@ -27,9 +43,15 @@ class UserInfo(APIView):
 			username = Token.objects.get(key=token).user.username
 			user_code = Token.objects.get(key=token).user.is_superuser
 			role_list = self._user_role(username)
-			menu_data = self._menus(role_list)
-			accessMenus = self._accessMenus(menu_data)
-			return Response(data)
+			permissions_list, first_menus, menu_list = self._menus(role_list)
+			accessMenus = self._accessMenus(first_menus, menu_list)
+			print(accessMenus)
+			data = {"userName": username, "isAdmin": user_code, "userRoles": role_list,
+					"userPermissions": permissions_list,
+					"accessMenus": accessMenus, "accessRoutes": [], "accessInterfaces": [], "avatarUrl": ""
+					}
+
+			return Response(_http_result(status.HTTP_200_OK, data=data))
 		return Response(data)
 
 	def _user_role(self, username):
@@ -50,32 +72,48 @@ class UserInfo(APIView):
 		"""
 		menu_list = []
 		permissions_list = []
-		first_menu = []
-		menu_node =set()
+		first_menus =[]
 		for role_code in role_code_list:
 			menu_queryset = Menu.objects.filter(role__code=role_code).all().values()
 			for menu_dict in menu_queryset:
-				if menu_dict['parent_id'] == '0':
-					first_menu.append(menu_dict)
 				if menu_dict['type'] == 0 :
-					menu_node.add(menu_dict['parent_id'])
-					menu_list.append({menu_dict['parent_id']:menu_dict})
+					if menu_dict['parent_id'] == '0':
+						first_menus.append(menu_dict)
+					menu_list.append(menu_dict)
 				permissions_list.append(menu_dict['permission'])
-		menu_data = {"menu_node":menu_node, "menu_list":menu_list,"permissions_list":permissions_list,"first_menu":first_menu}
-		return menu_data
+		return permissions_list, first_menus, menu_list
 
-	def _accessMenus(self ,menu_data):
-		print(menu_data['menu_node'])
-		print(menu_data['menu_list'])
-		for first_menu in menu_data["first_menu"]:
-			children = []
-			for node in menu_data["menu_node"]:
-				print(first_menu)
-				if first_menu["parent_id"]  == node :
-					continue
+	def _accessMenus(self, first_menus, menu_list):
+		"""
+		将用户有权限的菜单正合返回
+		:param first_menus:
+		:param menu_list:
+		:return:
+		"""
+		print(first_menus)
+		for node in first_menus:
+			children = self._subMenus(node['menu_id'], menu_list)
+			if children:
+				# 如果有子菜单则继续递归执行
+				node["children"] = children
+				self._accessMenus(children, menu_list)
+		else:
+			return first_menus
 
-			# print(menu_data['first_menu'][n][i])
-		return menu_data
+	@staticmethod
+	def _subMenus(parent_id, menu_list ):
+		"""
+		根据菜单id,获取所有的子菜单
+		:param parent_id:
+		:param menu_list:
+		:return:
+		"""
+		sub_menus = []
+		for menu in menu_list:
+			if parent_id == menu["parent_id"]:
+				sub_menus.append(menu)
+		else:
+			return sub_menus
 
 	# def _accessMenus(self,permissions_list):
 	# 	menu_list = []
@@ -86,23 +124,7 @@ class UserInfo(APIView):
 	# 	print(menu_list)
 	# 	return menu_list
 
-"""
-{
-  "statusCode": 200,
-  "msg": "",
-  "data": {
-    "userName": "",
-    "isAdmin": 0,
-    "userRoles": [],
-    "userPermissions": [],
-    "accessMenus": [],
-    "accessRoutes": [],
-    "accessInterfaces": [],
 
-    "avatarUrl": "https://api.adorable.io/avatars/85/abott@adorable.png"
-  }
-}
-"""
 
 
 
