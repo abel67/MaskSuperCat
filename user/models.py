@@ -1,12 +1,17 @@
 from django.db import models
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractBaseUser
+
+
 # Create your models here.
 
 
-class User(AbstractUser):
-    is_superuser = models.SmallIntegerField(choices=((0, '管理员'),(1, '普通用户')))
+class User(AbstractBaseUser):
+    username = models.CharField(max_length=18, unique=True, verbose_name="用户账号")
+    name = models.CharField(max_length=18, unique=True, verbose_name="名字")
+    is_superuser = models.SmallIntegerField(choices=((0, '管理员'), (1, '普通用户')))
     user_role = models.ManyToManyField("Role", db_table="user_to_role", verbose_name="用户角色")
+    USERNAME_FIELD = 'username'
 
     class Meta:
         db_table = "msk_user"
@@ -17,7 +22,8 @@ class Role(models.Model):
     name = models.CharField(max_length=18, unique=True, verbose_name="角色名")
     code = models.CharField(max_length=128, null=True, verbose_name="角色代码")
     description = models.CharField(max_length=128, null=True, verbose_name="角色描述")
-    permission = models.ManyToManyField('Menu', db_table='role_to_menu', verbose_name="角色权限")
+    menus = models.ManyToManyField('Menu', db_table='role_to_menu', verbose_name="角色权限")
+    routes = models.ManyToManyField('Route', db_table='role_to_route', verbose_name='角色路由')
 
     class Meta:
         db_table = "msk_role"
@@ -35,14 +41,13 @@ class Interface(models.Model):
 
 
 class Menu(models.Model):
-    id = models.AutoField(primary_key=True)
-    menu_id = models.CharField(max_length=128, unique=True, verbose_name="菜单ID")
-    parent_id = models.CharField(max_length=128, verbose_name="父菜单ID")
-    path = models.CharField(max_length=128, verbose_name="菜单路径")
+    id = models.AutoField(primary_key=True, verbose_name="菜单ID")
+    parentId = models.IntegerField(verbose_name="父菜单ID")
+    path = models.CharField(max_length=128, null=True, verbose_name="菜单路径")
     title = models.CharField(max_length=128, verbose_name="菜单标题")
     icon = models.CharField(max_length=128, null=True, verbose_name="菜单图标")
     permission = models.CharField(max_length=128, null=True, verbose_name="菜单权限标识")
-    type = models.SmallIntegerField(max_length=2, choices=((0, u"菜单"), (1, "功能")), verbose_name="类型")
+    type = models.SmallIntegerField(choices=((1, u"菜单"), (2, "功能")), verbose_name="类型")
     sort = models.IntegerField(verbose_name="排序")
     is_lock = models.BooleanField(default=False, verbose_name="锁定")
     api = models.ManyToManyField('Interface', db_table='menu_to_interface')
@@ -51,20 +56,12 @@ class Menu(models.Model):
         db_table = "msk_menu"
 
 
-
-
-
-
-
-
 class Route(models.Model):
-    id = models.AutoField(primary_key=True)
-    route_id = models.CharField(max_length=128, unique=True, verbose_name="路由ID")
-    parent_id = models.CharField(max_length=128, verbose_name="父路由ID")
+    id = models.AutoField(primary_key=True, verbose_name="路由ID")
+    parentId = models.IntegerField(verbose_name="父路由ID")
     path = models.CharField(max_length=128, verbose_name="路由路径")
     name = models.CharField(max_length=18, unique=True, verbose_name="路由名")
     title = models.CharField(max_length=128, verbose_name="路由标题")
-    permission = models.CharField(max_length=128, verbose_name="路由权限标识")
     sort = models.IntegerField(verbose_name="排序")
     component = models.CharField(max_length=128, verbose_name="组件标识")
     component_path = models.CharField(max_length=128, verbose_name="组件路径")
@@ -73,5 +70,3 @@ class Route(models.Model):
 
     class Meta:
         db_table = "msk_route"
-
-
