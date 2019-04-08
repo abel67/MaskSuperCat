@@ -23,8 +23,22 @@ class UserInfoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = "__all__"
+
+
 class MenuSerializer(serializers.ModelSerializer):
     class Meta:
         model = Menu
         exclude = ('id', 'api')
+        ordering_fields = ('id', 'sort')
+
+
+class RouteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Route
+        fields = "__all__"
+        # exclude = ('id', 'api')
         ordering_fields = ('id', 'sort')

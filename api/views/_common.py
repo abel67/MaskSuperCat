@@ -8,6 +8,7 @@
 from django.utils import six
 from rest_framework.serializers import Serializer
 from rest_framework.response import Response
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework import status, viewsets, filters
 from django_filters import rest_framework
 
@@ -108,8 +109,8 @@ class Common:
         for node in parent_list:
             children = self._subAll(node['id'], all_data)
             if children:
-                # 如果有子菜单则继续递归执行
                 node["children"] = children
+                # 如果有子菜单则继续递归执行
                 self._parentAll(children, all_data)
         else:
             return parent_list
@@ -128,3 +129,13 @@ class Common:
                 sub_list.append(data)
         else:
             return sub_list
+
+
+class D2AdminPagination(LimitOffsetPagination):
+    default_limit = 1000
+    # 当前的位置
+    offset_query_param = "pageIndex"
+    # 通过limit改变默认显示的个数
+    limit_query_param = "pageSize"
+    # 一页最多显示的个数
+    max_limit = 1000

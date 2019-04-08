@@ -61,10 +61,11 @@ class Route(models.Model):
     parentId = models.IntegerField(verbose_name="父路由ID")
     path = models.CharField(max_length=128, verbose_name="路由路径")
     name = models.CharField(max_length=18, unique=True, verbose_name="路由名")
+    permission = models.CharField(max_length=128, null=True, verbose_name="路由权限标识")
     title = models.CharField(max_length=128, verbose_name="路由标题")
     sort = models.IntegerField(verbose_name="排序")
     component = models.CharField(max_length=128, verbose_name="组件标识")
-    component_path = models.CharField(max_length=128, verbose_name="组件路径")
+    componentPath = models.CharField(max_length=128, verbose_name="组件路径")
     cache = models.BooleanField(default=False, verbose_name="keep-alive")
     is_lock = models.BooleanField(default=False, verbose_name="锁定")
 
