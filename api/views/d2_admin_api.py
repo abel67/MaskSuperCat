@@ -9,9 +9,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from user.models import User
-from user.models import Menu, Route, Interface
-from api.views._common import Common, CustomViewBase, JsonResponse, D2AdminPagination
-from api.serializers import LoginSerializer, MenuSerializer, RouteSerializer, UserSerializer
+from user.models import Menu, Route, Interface, Role
+from api.views._common import Common, CustomViewBase, JsonResponse, MSKPagination
+from api.serializers import LoginSerializer, MenuSerializer, RouteSerializer, UserSerializer, RoleSerializer
 from rest_framework.authtoken.models import Token
 
 
@@ -28,14 +28,14 @@ class Login(APIView):
         """
         if not request.data:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        user_form = request.data
-        user_info = User.objects.filter(username=user_form["username"], password=user_form["password"]).first()
-        serializers = LoginSerializer(instance=user_info, data=user_form)
-        if serializers.is_valid(raise_exception=True):
-            token_str = Token.objects.get(user=serializers.data['id']).key
-            return JsonResponse(code=status.HTTP_200_OK, token=token_str, data=serializers.data)
+        user_info = User.objects.filter(name=request.data["username"],
+                                        password=request.data["password"]).values("id", "trueName").first()
+        if user_info:
+            token_str = Token.objects.get(user=user_info['id']).key
+            user_info['name'] = user_info.pop('trueName')
+            return JsonResponse(code=status.HTTP_200_OK, token=token_str, data=user_info)
         else:
-            return JsonResponse(code=499, msg="用户名或密码错误", data=serializers.data)
+            return JsonResponse(code=499, msg="用户名或密码错误", data=user_info)
 
 
 class UserInfo(Common, APIView):
@@ -54,7 +54,7 @@ class UserInfo(Common, APIView):
         if req_token:
             # 根据token获取user
             token = req_token.split()[1].strip()
-            username = Token.objects.get(key=token).user.username
+            username = Token.objects.get(key=token).user.name
             user_code = Token.objects.get(key=token).user.is_superuser
             role_list = self._user_role(username)
             permissions_list, access_menus = self.menus(role_list, user_code)
@@ -74,7 +74,7 @@ class UserInfo(Common, APIView):
         :param username: 已登录用户的用户名
         :return: ["user_role_1","user_role_2"...]
         """
-        role_query = User.objects.filter(username=username).values("user_role__code").all()
+        role_query = User.objects.filter(name=username).values("user_role__code").all()
         role_list = [role['user_role__code'] for role in role_query if role["user_role__code"]]
         return role_list
 
@@ -84,25 +84,26 @@ class UserInfo(Common, APIView):
         :param role_code_list: ["user_role_1", "user_role_2", ...]
         :return: ["permissions_name1", "permissions_name2", ...]
         """
+        all_menus = []
+        permissions_list = []
+        first_menus = []
         if user_code:
             menu_queryset = Menu.objects.all().values().order_by('sort')
-            first_menus, all_menus, permissions_list = self._menu_queryset(menu_queryset)
+            self._menu_queryset(menu_queryset, all_menus, permissions_list, first_menus)
         else:
             for role_code in role_code_list:
                 menu_queryset = Menu.objects.filter(role__code=role_code).all().values().order_by('sort')
-                first_menus, all_menus, permissions_list = self._menu_queryset(menu_queryset)
+                self._menu_queryset(menu_queryset, all_menus, permissions_list, first_menus)
         access_menus = self._parentAll(first_menus, all_menus)
         return permissions_list, access_menus
 
-    def _menu_queryset(self, menu_queryset):
+    def _menu_queryset(self, menu_queryset, all_menus, permissions_list, first_menus):
         """
         根据传入的menu_queryset,返回相应的数据
         :param menu_queryset: menu_queryset
         :return: first_menus, all_menus, permissions_list
         """
-        all_menus = []
-        permissions_list = []
-        first_menus = []
+
         for menu_dict in menu_queryset:
             # 去除用户有多个角色,会导入同一菜单的情况
             if menu_dict in first_menus:
@@ -117,19 +118,20 @@ class UserInfo(Common, APIView):
         return first_menus, all_menus, permissions_list
 
     def routes(self, role_code_list: list, user_code):
+        all_routes = []
+        first_routes = []
         if user_code:
             route_queryset = Route.objects.all().values()
-            first_routes, all_routes = self._route_queryset(route_queryset)
+            self._route_queryset(route_queryset, first_routes, all_routes)
         else:
             for role_code in role_code_list:
                 route_queryset = Route.objects.filter(role__code=role_code).all().values()
-                first_routes, all_routes = self._route_queryset(route_queryset)
+                self._route_queryset(route_queryset, first_routes, all_routes)
         access_routes = self._parentAll(first_routes, all_routes)
         return access_routes
 
-    def _route_queryset(self, route_queryset):
-        all_routes = []
-        first_routes = []
+    def _route_queryset(self, route_queryset, first_routes, all_routes):
+
         for route_dict in route_queryset:
             # 去除用户有多个角色,会导入同一菜单的情况
             if route_dict in all_routes:
@@ -201,22 +203,37 @@ class Routes(Common, CustomViewBase):
         return JsonResponse(code=status.HTTP_200_OK, data=access_routes, status=status.HTTP_200_OK)
 
 
-class Users(Common, APIView ):
-
-
-
+class UserPaged(Common, APIView):
+    """用户列表分页"""
 
     def get(self, request):
         queryset = User.objects.all()
         serializer_class = UserSerializer
-        pageIndex = int(request.query_params.get("pageIndex"))
-        pageSize = int(request.query_params.get("pageSize"))
         # 创建分页对象
-        pg = D2AdminPagination()
-        # 获取分页的数据
-        print(queryset)
-        page_roles = pg.paginate_queryset(queryset=queryset, request=request, view=self)
-        print(page_roles)
-        # 对数据进行序列化
-        ser = serializer_class(instance=page_roles, many=True)
-        return pg.get_paginated_response(ser.data)
+        print(request.query_params)
+        paged = MSKPagination()
+        page_user_list = paged.paginate_queryset(queryset=queryset, request=request, view=self)  # 把数据放在分页器上面
+
+        ser = serializer_class(instance=page_user_list, many=True)  # 序列化数据
+        data = {"totalCount": len(queryset), "rows": ser.data}
+        return JsonResponse(code=status.HTTP_200_OK, status=status.HTTP_200_OK, data=data)
+
+
+class Users(Common, CustomViewBase):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class RolePaged(Common, APIView):
+    """角色列表分页"""
+
+    def get(self, request):
+        queryset = Role.objects.all()
+        serializer_class = RoleSerializer
+        # 创建分页对象
+        paged = MSKPagination()
+        page_user_list = paged.paginate_queryset(queryset=queryset, request=request, view=self)  # 把数据放在分页器上面
+
+        ser = serializer_class(instance=page_user_list, many=True)  # 序列化数据
+        data = {"totalCount": len(queryset), "rows": ser.data}
+        return JsonResponse(code=status.HTTP_200_OK, status=status.HTTP_200_OK, data=data)

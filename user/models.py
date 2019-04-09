@@ -7,11 +7,13 @@ from django.contrib.auth.models import AbstractBaseUser
 
 
 class User(AbstractBaseUser):
-    username = models.CharField(max_length=18, unique=True, verbose_name="用户账号")
-    name = models.CharField(max_length=18, unique=True, verbose_name="名字")
+    name = models.CharField(max_length=18, unique=True, verbose_name="用户账号")
+    trueName = models.CharField(max_length=18, unique=True, verbose_name="名字")
+    email = models.EmailField(null=True, verbose_name="邮箱",default=None)
+    phone = models.CharField(null=True, max_length=11, verbose_name="手机",default=None)
     is_superuser = models.SmallIntegerField(choices=((0, '管理员'), (1, '普通用户')))
     user_role = models.ManyToManyField("Role", db_table="user_to_role", verbose_name="用户角色")
-    USERNAME_FIELD = 'username'
+    USERNAME_FIELD = 'name'
 
     class Meta:
         db_table = "msk_user"

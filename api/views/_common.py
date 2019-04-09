@@ -8,7 +8,7 @@
 from django.utils import six
 from rest_framework.serializers import Serializer
 from rest_framework.response import Response
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.pagination import PageNumberPagination
 from rest_framework import status, viewsets, filters
 from django_filters import rest_framework
 
@@ -131,11 +131,11 @@ class Common:
             return sub_list
 
 
-class D2AdminPagination(LimitOffsetPagination):
-    default_limit = 1000
-    # 当前的位置
-    offset_query_param = "pageIndex"
-    # 通过limit改变默认显示的个数
-    limit_query_param = "pageSize"
-    # 一页最多显示的个数
-    max_limit = 1000
+class MSKPagination(PageNumberPagination):
+    # 每页显示的多少
+    # page_size = 1
+    # 关键字
+    page_size_query_param = 'pageSize'
+    # max_page_size = 1  # 每页最多显示多少个
+    # 页码
+    page_query_param = 'pageIndex'  # 页码是从1开始的，也是关键字

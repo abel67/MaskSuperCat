@@ -14,7 +14,7 @@ class LoginSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "username")
+        fields = ("id", "name")
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
@@ -24,9 +24,19 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    isAdd = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = "__all__"
+        exclude = ("user_role",)
+
+    def get_isAdd(self, obj):
+        role_queryset = Role.objects.filter(user__name=obj.name).all().first()
+        if role_queryset:
+            is_add = 1
+        else:
+            is_add = 2
+        return is_add
 
 
 class MenuSerializer(serializers.ModelSerializer):
@@ -42,3 +52,19 @@ class RouteSerializer(serializers.ModelSerializer):
         fields = "__all__"
         # exclude = ('id', 'api')
         ordering_fields = ('id', 'sort')
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    isAdd = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Role
+        fields = "__all__"
+
+    def get_isAdd(self, obj):
+        role_queryset = Role.objects.filter(user__name=obj.name).all().first()
+        if role_queryset:
+            is_add = 1
+        else:
+            is_add = 2
+        return is_add
