@@ -11,7 +11,6 @@ from rest_framework import serializers
 
 
 class LoginSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = ("id", "name")
@@ -28,7 +27,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        exclude = ("user_role",)
+        exclude = ("user_role","last_login","create_time")
+        ordering_fields = ('id',)
 
     def get_isAdd(self, obj):
         role_queryset = Role.objects.filter(user__name=obj.name).all().first()
@@ -39,11 +39,18 @@ class UserSerializer(serializers.ModelSerializer):
         return is_add
 
 
+class UserAddSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        exclude = ("user_role",)
+
+
 class MenuSerializer(serializers.ModelSerializer):
     class Meta:
         model = Menu
-        exclude = ('id', 'api')
-        ordering_fields = ('id', 'sort')
+        exclude = ('api',)
+        ordering_fields = ('sort',)
 
 
 class RouteSerializer(serializers.ModelSerializer):
@@ -62,9 +69,11 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_isAdd(self, obj):
-        role_queryset = Role.objects.filter(user__name=obj.name).all().first()
-        if role_queryset:
-            is_add = 1
-        else:
-            is_add = 2
-        return is_add
+        print(obj.__dict__)
+        # user_queryset = Role.objects.values("name").filter(user_role__code=obj.code)
+        # print(user_queryset)
+        # if is_add:
+        #     is_add = 1
+        # else:
+        #     is_add = 2
+        return "1"

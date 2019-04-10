@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
-
+import datetime
 
 # Create your models here.
 
@@ -9,8 +9,9 @@ from django.contrib.auth.models import AbstractBaseUser
 class User(AbstractBaseUser):
     name = models.CharField(max_length=18, unique=True, verbose_name="用户账号")
     trueName = models.CharField(max_length=18, unique=True, verbose_name="名字")
-    email = models.EmailField(null=True, verbose_name="邮箱",default=None)
-    phone = models.CharField(null=True, max_length=11, verbose_name="手机",default=None)
+    email = models.EmailField(null=True, verbose_name="邮箱")
+    phone = models.CharField(null=True, max_length=11, verbose_name="手机", )
+    create_time = models.DateTimeField(verbose_name="创建时间")
     is_superuser = models.SmallIntegerField(choices=((0, '管理员'), (1, '普通用户')))
     user_role = models.ManyToManyField("Role", db_table="user_to_role", verbose_name="用户角色")
     USERNAME_FIELD = 'name'
