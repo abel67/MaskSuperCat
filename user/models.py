@@ -26,7 +26,7 @@ class Role(models.Model):
     code = models.CharField(max_length=128, null=True, verbose_name="角色代码")
     description = models.CharField(max_length=128, null=True, verbose_name="角色描述")
     menus = models.ManyToManyField('Menu', db_table='role_to_menu', verbose_name="角色权限")
-    routes = models.ManyToManyField('Route', db_table='role_to_route', verbose_name='角色路由')
+    # routes = models.ManyToManyField('Route', db_table='role_to_route', verbose_name='角色路由')
 
     class Meta:
         db_table = "msk_role"
@@ -51,7 +51,7 @@ class Menu(models.Model):
     icon = models.CharField(max_length=128, null=True, verbose_name="菜单图标")
     permission = models.CharField(max_length=128, null=True, verbose_name="菜单权限标识")
     type = models.SmallIntegerField(choices=((1, u"菜单"), (2, "功能")), verbose_name="类型")
-    sort = models.IntegerField(verbose_name="排序")
+    sort = models.IntegerField(verbose_name="排序", null=True )
     is_lock = models.BooleanField(default=False, verbose_name="锁定")
     api = models.ManyToManyField('Interface', db_table='menu_to_interface')
 
@@ -62,7 +62,7 @@ class Menu(models.Model):
 class Route(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="路由ID")
     parentId = models.IntegerField(verbose_name="父路由ID")
-    path = models.CharField(max_length=128, verbose_name="路由路径")
+    path = models.CharField(max_length=128, null=True, verbose_name="路由路径")
     name = models.CharField(max_length=18, unique=True, verbose_name="路由名")
     permission = models.CharField(max_length=128, null=True, verbose_name="路由权限标识")
     title = models.CharField(max_length=128, verbose_name="路由标题")
