@@ -17,6 +17,8 @@ router.register(r'route', Routes)
 router.register(r'user', Users)
 router.register(r'interface', InterFaces)
 router.register(r'role/permissions', RolesPermissions)
+router.register(r'role', Roles)
+
 # 使用自动URL路由连接我们的API。
 # 另外，我们还包括支持浏览器浏览API的登录URL。
 urlpatterns = [
