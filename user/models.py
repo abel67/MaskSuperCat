@@ -1,14 +1,12 @@
 from django.db import models
-from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
-import datetime
 
 # Create your models here.
 
 
 class User(AbstractBaseUser):
     name = models.CharField(max_length=18, unique=True, verbose_name="用户账号")
-    trueName = models.CharField(max_length=18, unique=True, verbose_name="名字")
+    true_name = models.CharField(max_length=18, unique=True, verbose_name="名字")
     email = models.EmailField(null=True, verbose_name="邮箱")
     phone = models.CharField(null=True, max_length=11, verbose_name="手机", )
     create_time = models.DateTimeField(verbose_name="创建时间")
@@ -45,13 +43,13 @@ class Interface(models.Model):
 
 class Menu(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="菜单ID")
-    parentId = models.IntegerField(verbose_name="父菜单ID")
-    path = models.CharField(max_length=128, null=True, verbose_name="菜单路径")
+    parent_id = models.IntegerField(verbose_name="父菜单ID")
+    path = models.CharField(max_length=128, null=True, blank=True, verbose_name="菜单路径")
     title = models.CharField(max_length=128, verbose_name="菜单标题")
     icon = models.CharField(max_length=128, null=True, verbose_name="菜单图标")
     permission = models.CharField(max_length=128, null=True, verbose_name="菜单权限标识")
     type = models.SmallIntegerField(choices=((1, u"菜单"), (2, "功能")), verbose_name="类型")
-    sort = models.IntegerField(verbose_name="排序", null=True )
+    sort = models.IntegerField(verbose_name="排序", null=True)
     is_lock = models.BooleanField(default=False, verbose_name="锁定")
     api = models.ManyToManyField('Interface', db_table='menu_to_interface')
 
@@ -61,14 +59,14 @@ class Menu(models.Model):
 
 class Route(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="路由ID")
-    parentId = models.IntegerField(verbose_name="父路由ID")
+    parent_id = models.IntegerField(verbose_name="父路由ID")
     path = models.CharField(max_length=128, null=True, verbose_name="路由路径")
     name = models.CharField(max_length=18, unique=True, verbose_name="路由名")
     permission = models.CharField(max_length=128, null=True, verbose_name="路由权限标识")
     title = models.CharField(max_length=128, verbose_name="路由标题")
     sort = models.IntegerField(verbose_name="排序")
     component = models.CharField(max_length=128, verbose_name="组件标识")
-    componentPath = models.CharField(max_length=128, verbose_name="组件路径")
+    component_path = models.CharField(max_length=128, verbose_name="组件路径")
     cache = models.BooleanField(default=False, verbose_name="keep-alive")
     is_lock = models.BooleanField(default=False, verbose_name="锁定")
 
