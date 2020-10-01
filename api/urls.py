@@ -9,7 +9,7 @@
 from django.urls import path, include
 from api.views import (d2_admin_api)
 from rest_framework import routers
-from api.views.d2_admin_api import Menus, Routes, Users, Roles,RolesPermissions, InterFaces
+from api.views.d2_admin_api import Menus, Routes, Users, Roles, RolesPermissions, InterFaces
 
 router = routers.DefaultRouter()
 router.register(r'menu', Menus)
@@ -25,12 +25,12 @@ urlpatterns = [
     path('auth/login/', d2_admin_api.Login.as_view()),
     path('user/info/', Users.as_view({'get': 'info'})),
     path('user/pagedlist/', Users.as_view({'get': 'paged'})),
-    path('user/filter/', Users.as_view({'get': 'filter'})),
     path('user/editroleuser/', Users.as_view({'post': 'role_to_user'})),
+    path('user/batchdel/', Users.as_view({'delete': 'batch_del'})),
     path('role/pagedlist/', Roles.as_view({'get': 'paged'})),
+    path('role/batchdel/', Roles.as_view({'delete': 'batch_del'})),
     path('interface/paged/', InterFaces.as_view({'get': 'paged'})),
     path('interface/relate/', InterFaces.as_view({'post': 'api_to_menu'})),
+    path('interface/batchdel/', InterFaces.as_view({'delete': 'batch_del'})),
     path('', include(router.urls)),
 ]
-
-
