@@ -16,16 +16,16 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    roleId = None
-    isAdd = serializers.SerializerMethodField()
+    role_id = None
+    is_add = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         exclude = ("user_role", "create_time")
         ordering_fields = ('id',)
 
-    def get_isAdd(self, obj):
-        role_queryset = Role.objects.filter(user__name=obj.name, id=self.roleId)
+    def get_is_add(self, obj):
+        role_queryset = Role.objects.filter(user__name=obj.name, id=self.role_id)
         if role_queryset:
             is_add = 1
         else:
@@ -41,7 +41,7 @@ class UserAddSerializer(serializers.ModelSerializer):
 
 
 class MenuSerializer(serializers.ModelSerializer):
-    path = serializers.CharField(allow_null=True,label='路径', max_length=128, required=False)
+    path = serializers.CharField(allow_null=True, label='路径', max_length=128, required=False)
 
     class Meta:
         model = Menu
@@ -60,41 +60,38 @@ class RouteSerializer(serializers.ModelSerializer):
 
 
 class RoleSerializer(serializers.ModelSerializer):
-    userId = None
-    isAdd = serializers.SerializerMethodField()
+    user_id = None
+    is_add = serializers.SerializerMethodField()
 
     class Meta:
         model = Role
         exclude = ('menus',)
 
-    def get_isAdd(self, obj):
-        user_queryset = User.objects.filter(id=self.userId, user_role__id=obj.id)
-
+    def get_is_add(self, obj):
+        user_queryset = User.objects.filter(id=self.user_id, user_role__id=obj.id)
         if user_queryset:
             is_add = 1
         else:
             is_add = 2
         return is_add
 
-class RolesPermissionsSerializers(serializers.ModelSerializer):
 
+class RolesPermissionsSerializers(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ("id", "menus")
 
 
-
-
 class InterfaceSerializer(serializers.ModelSerializer):
-    menuId = None
-    isAdd = serializers.SerializerMethodField()
+    menu_id = None
+    is_add = serializers.SerializerMethodField()
+
     class Meta:
         model = Interface
         fields = "__all__"
 
-    def get_isAdd(self, obj):
-        menu_queryset = Menu.objects.filter(id=self.menuId, api__id=obj.id)
-        print(menu_queryset)
+    def get_is_add(self, obj):
+        menu_queryset = Menu.objects.filter(id=self.menu_id, api__id=obj.id)
         if menu_queryset:
             is_add = 1
         else:
